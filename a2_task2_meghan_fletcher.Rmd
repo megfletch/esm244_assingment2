@@ -1,0 +1,74 @@
+---
+title: "Assignment 2, Task 2"
+author: "Meghan Fletcher"
+date: "2/5/2021"
+output: html_document
+code_folding: hide
+---
+
+```{r setup, include=FALSE, message = FALSE, warning = TRUE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(here)
+library(broom)
+library(janitor)
+```
+
+## **Overview:** 
+
+
+## Data Visualization:
+```{r}
+# Read in the data
+palmetto_data <- read_csv(here("data","palmetto.csv")) %>% 
+  clean_names()
+
+# Wrangle the data for visualization
+palmetto_clean <- palmetto_data %>% 
+  select("year", "species", "height", "length", "width", "green_lvs")
+```
+
+```{r, fig.cap = "**Figure 1:** This graph shows the relationship between tree height and the amount of green leaves on both *Serenoa repens* and *Sabal etonia* (Data: Abrahamson et al. 2019)."}
+# Create first visualization: height and green leaves comparison
+
+ggplot(data = palmetto_clean, aes(x = height, y = green_lvs)) +
+  geom_col(aes(fill=species)) +
+  facet_wrap(~ species) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(x = "Height (cm)", y = "Number of Green Leaves", title = "Leaf Content vs. Height of Serenoa repens and Sabal etonia", subtitle = "From 1982 to 2017")
+```
+#### From the graph above, we can see that both *Serenoa repens* and *Sabal etonia* appear to be similar in height (in centimaters). However, *Serenoa repens* tends to have a great amount of green leaves. Green leaf amount appears to be greatest for trees with heights close to the meana nd median values of hieght for both species. 
+
+
+```{r, fig.cap="**Figure 2:** The graphs here show that both species appear to have a strong, positive correlaiton between canopy length (cm) and canopy width (cm) (Data: Abrahamson et al. 2019)."}
+# Create a second visualization looking at the relationship between canopy width and canopy length
+
+ggplot(data = palmetto_clean, aes(x = length, y = width)) +
+  geom_point(aes(color=species)) +
+  geom_smooth(method='lm', color = "red") +
+  facet_wrap(~species) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(x = "Canopy Length (cm)", y = "Canopy Width (cm)", title = "Compariosn of Canopy Length vs. Canopy Width of Serenoa repens and Sabal etonia", subtitle = "From 1982 to 2017")
+```
+
+As canopy length (cm) increases, canopy width (cm) appears to increase almost evenly for both *Serenoa repens* and *Sabal etonia*.
+
+```{r, fig.cap="**Figure 3:** This boxplot shows us that based on the average canopy length (cm) of both species, *Serenoa repens* has the greatest amount of green leaves as compared to *Sabal etonia* (Data: Abrahamson et al. 2019)."}
+# Create third visualization looking at amount of green leaves by species
+
+ggplot(data = palmetto_clean, aes(x = length, y = green_lvs, color = species)) +
+  geom_boxplot() +
+  facet_wrap(~species) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(x = "Canopy Length (cm)", y = "Amount of Green Leaves", title = "Green Leaf Content of Serenoa repens and Sabal etonia", subtitle = "From 1982 to 2017")
+```
+
+Based on canopy length (cm), *Serenoa repens* appears to have a great amount of green leaves on average than *Sabal etonia*.
+
+
+
+

@@ -1,0 +1,104 @@
+---
+title: "a2_task3"
+author: "Meghan Fletcher"
+date: "2/2/2021"
+output: html_document
+  code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+
+library(tidyverse)
+library(tidytuesdayR)
+library(fs)
+library(ggmap)
+library(maps)
+library(mapdata)
+library(sf)
+library(raster)
+library(dplyr)
+library(spData)
+library(tmap)
+library(here)
+library(patchwork)
+library(leaflet)
+library(janitor)
+library(rnaturalearth)
+library(tigris)
+```
+
+### Read int he data using the 'tidytuesdayR' package:
+```{r}
+tuesdata <- tidytuesdayR::tt_load('2021-01-26')
+tuesdata <- tidytuesdayR::tt_load(2021, week = 5)
+
+plastics <- tuesdata$plastics
+```
+
+```{r}
+plastics <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-01-26/plastics.csv') 
+```
+
+
+```{r}
+# Wrangle the data
+plastic2019 <- plastics %>% 
+  filter(year == "2019") %>% 
+  dplyr::select(country, year, parent_company, grand_total, volunteers) %>% 
+  filter(parent_company == "The Coca-Cola Company") %>% 
+  filter(country != "EMPTY") %>% 
+  mutate(country = tolower(country))
+
+# Create a df for cola plastic in 2019
+cola_plastic <- plastic2019 %>% 
+  dplyr::select(country, grand_total)
+
+# Create a df for volunteers per country in 2019
+cola_volunteers <- plastic2019 %>% 
+  dplyr::select(country, volunteers)
+```
+
+
+
+```{r, load shapefile}
+global_map <- 
+  sf::read_sf(
+    here("data", 
+         "Countries", 
+         "99bfd9e7-bb42-4728-87b5-07f8c8ac631c2020328-1-1vef4ev.lu5nk.shp")
+  ) %>% 
+  clean_names() %>% 
+  mutate(cntry_name = str_to_lower(cntry_name), 
+         cntry_name = if_else(str_detect(cntry_name, "united states"), "united states of america", cntry_name))
+```
+
+
+
+```{r}
+# Join map and data set using 'tigris package'
+
+cola_plastic_map <-
+  geo_join(
+    spatial_data = global_map,
+    data_frame = cola_plastic,
+    by_sp = "cntry_name",
+    by_df = "country",
+    how = "left"
+  )
+```
+
+
+
+```{r}
+ggplot(cola_plastic_map, aes(palette = "BuGn")) +
+  geom_sf(aes(fill=grand_total)) +
+  theme_bw() +
+  scale_fill_brewer(palette = "OrRd")
+```
+
+
+
+
+
+
