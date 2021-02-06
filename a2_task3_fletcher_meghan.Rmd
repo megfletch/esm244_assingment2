@@ -3,7 +3,7 @@ title: "a2_task3"
 author: "Meghan Fletcher"
 date: "2/2/2021"
 output: html_document
-  code_folding: hide
+code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -26,6 +26,8 @@ library(leaflet)
 library(janitor)
 library(rnaturalearth)
 library(tigris)
+library(classInt)
+library(viridis)
 ```
 
 ### Read int he data using the 'tidytuesdayR' package:
@@ -89,16 +91,46 @@ cola_plastic_map <-
 ```
 
 
-
 ```{r}
-ggplot(cola_plastic_map, aes(palette = "BuGn")) +
+# Create Cola plastics map
+graph_A <- ggplot(cola_plastic_map) +
   geom_sf(aes(fill=grand_total)) +
-  theme_bw() +
-  scale_fill_brewer(palette = "OrRd")
+  theme_void() +
+  theme(legend.position="bottom") +
+  scale_fill_gradientn(colours=rev(magma(5)),
+                       na.value = "lightgray") +
+  labs(fill = "Total Plastic Waste")
 ```
 
+```{r}
+# Join map and data set using 'tigris package'
 
+cola_volunteers_map <-
+  geo_join(
+    spatial_data = global_map,
+    data_frame = cola_volunteers,
+    by_sp = "cntry_name",
+    by_df = "country",
+    how = "left"
+  )
+```
 
+```{r}
+# Create Cola volunteers map
+graph_B <- ggplot(cola_volunteers_map) +
+  geom_sf(aes(fill=volunteers)) +
+  theme_void() +
+  theme(legend.position="bottom") +
+  scale_fill_gradientn(colours=rev(magma(5)),
+                       na.value = "lightgray") +
+  labs(fill = "Total Volunters") 
+```
+
+```{r}
+# Use 'patchwork' function to join maps
+
+graph_A/graph_B
+```
 
 
 
