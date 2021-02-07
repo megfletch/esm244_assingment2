@@ -19,9 +19,6 @@ library(kableExtra)
 library(viridis)
 ```
 
-## **Overview:** 
-
-
 ## Part 1: Data Visualization
 ```{r}
 # Read in the data
@@ -38,7 +35,7 @@ palmetto_clean <- palmetto_data %>%
   mutate(plant_name = fct_drop(plant_name))
 ```
 
-```{r, fig.cap = "**Figure 1:** This graph shows the relationship between tree height and the amount of green leaves on both *Serenoa repens* and *Sabal etonia* (Data: Abrahamson et al. 2019)."}
+```{r, fig.cap = "**Figure 1:** The results represent the relationship between tree height and the amount of green leaves on both *Serenoa repens* and *Sabal etonia* (Data: Abrahamson et al. 2019)."}
 # Create first visualization: height and green leaves comparison
 
 ggplot(data = palmetto_clean, aes(x = height, y = green_lvs)) +
@@ -49,10 +46,10 @@ ggplot(data = palmetto_clean, aes(x = height, y = green_lvs)) +
   labs(x = "Height (cm)", y = "Number of Green Leaves", title = "Leaf Content vs. Height of Serenoa repens and Sabal etonia", subtitle = "From 1982 to 2017") +
   scale_fill_manual(values = c("darkseagreen4", "chocolate4"))
 ```
-#### From the graph above, we can see that both *Serenoa repens* and *Sabal etonia* appear to be similar in height (in centimaters). However, *Serenoa repens* tends to have a great amount of green leaves. Green leaf amount appears to be greatest for trees with heights close to the meana nd median values of hieght for both species. 
+#### From the graph above, we can see that both *Serenoa repens* and *Sabal etonia* appear to be similar in height (in centimaters). However, *Serenoa repens* tends to have a greater amount of green leaves. Green leaf amount appears to be greatest for trees with heights close to the mean and median values of height for both species. 
 
 
-```{r, fig.cap="**Figure 2:** The graphs here show that both species appear to have a strong, positive correlaiton between canopy length (cm) and canopy width (cm) (Data: Abrahamson et al. 2019)."}
+```{r, fig.cap="**Figure 2:** The points presented indicate that both species appear to have a strong, positive correlaiton between canopy length (cm) and canopy width (cm) (Data: Abrahamson et al. 2019)."}
 # Create a second visualization looking at the relationship between canopy width and canopy length
 
 ggplot(data = palmetto_clean, aes(x = length, y = width)) +
@@ -67,9 +64,9 @@ ggplot(data = palmetto_clean, aes(x = length, y = width)) +
     
 ```
 
-As canopy length (cm) increases, canopy width (cm) appears to increase almost evenly for both *Serenoa repens* and *Sabal etonia*.
+#### As canopy length (cm) increases, canopy width (cm) appears to increase almost evenly for both *Serenoa repens* and *Sabal etonia*.
 
-```{r, fig.cap="**Figure 3:** This boxplot shows us that based on the average canopy length (cm) of both species, *Serenoa repens* has the greatest amount of green leaves as compared to *Sabal etonia* (Data: Abrahamson et al. 2019)."}
+```{r, fig.cap="**Figure 3:** This boxplot shows us that based on the average canopy length (cm) of both species, *Serenoa repens* typically has a greater amount of green leaves present as compared to *Sabal etonia* (Data: Abrahamson et al. 2019)."}
 
 # Create third visualization looking at amount of green leaves by species
 
@@ -82,12 +79,13 @@ ggplot(data = palmetto_clean, aes(x = length, y = green_lvs)) +
   scale_fill_manual(values = c("darkseagreen4", "chocolate4"))
 ```
 
-Based on canopy length (cm), *Serenoa repens* appears to have a great amount of green leaves on average than *Sabal etonia*.
+#### Based on canopy length (cm), *Serenoa repens* appears to have a greater amount of green leaves on average than *Sabal etonia*. This result may change if the amount of green leaves are based on height or canopy width.
 
 
 
 ## Part 2: Binary Logistic Regression
 
+#### Priliminary binary logitic regression results:
 ```{r}
 # create a binary logistic regression model and table
 palmetto_blr <- glm(plant_name ~ height + length + width + green_lvs,
@@ -97,7 +95,7 @@ palmetto_blr <- glm(plant_name ~ height + length + width + green_lvs,
 summary(palmetto_blr)
 ```
 
-#### **Table 1:** This table shows the preliminary results from a binary logitic regression model performed on the Palmetto data where *Serenoa repens* and *Sabal etonia* are the plant species and the four predictor variables used are plant height (cm), canopy length (cm), canopy width (cm) and amount of green leaves present (Data: Abrahamson et al. (2019)).
+##### **Table 1:** The data presented depicts the preliminary results from a binary logitic regression model performed on the Palmetto data where *Serenoa repens* and *Sabal etonia* are the plant species and the four predictor variables used are plant height (cm), canopy length (cm), canopy width (cm) and amount of green leaves present (Data: Abrahamson et al. (2019)).
 ```{r}
 # Tidy up the data and create a table
 palmetto_blr_tidy <- tidy(palmetto_blr)
@@ -107,17 +105,13 @@ palmetto_blr_tidy %>%
    kable_classic_2(full_width = F, html_font = "Cambria")
 ```
 
-## Part 3: Probability of predicting plant type based on the BLR model
-
+## Part 3: Finding the Probability of Predicting the Correct Plant Species using BLR
 ```{r}
 palmetto_blr_fitted <- palmetto_blr %>% 
   broom::augment(type.predict = "response")
- 
-
-palmetto_blr_fitted
 ```
 
-#### 
+##### **Table 2:** The results display the correctness of the binary logistic regression model used. The percentages of *Serenoa repens* and *Sabal etonia* that were successfully and unsuccessfully predicted by the model based on the four predictor variables are displayed as well, including the actual number of each outcome in parantheses (Data: Abrahamson et al. (2019)). 
 ```{r}
 # Create a fitted table
 palmetto_fitted_table <- palmetto_blr_fitted %>% 
@@ -140,7 +134,11 @@ palmetto_final <- palmetto_fitted_table %>%
   rename("Plant Species" = plant_name)
 
 palmetto_final %>% 
-  kbl(caption = "Palmetto Plant Species Prediction Outcomes") %>% 
+  kbl(caption = "Palmetto Plant Species BInary Logitic Regression Prediction Outcomes") %>% 
    kable_classic_2(full_width = F, html_font = "Cambria")
 ```
 
+#### Overall, the BLR model used did a decent job at predicting the correct plant speices the majority of the time. 
+
+
+#### **Data citation:** Abrahamson, W.G. 2019. Survival, growth and biomass estimates of two dominant palmetto species of south-central Florida from 1981 - 2017, ongoing at 5-year intervals ver 1. Environmental Data Initiative. https://doi.org/10.6073/pasta/f2f96ec76fbbd4b9db431c79a770c4d5
