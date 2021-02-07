@@ -2,8 +2,9 @@
 title: "Assignment 2, Task 2"
 author: "Meghan Fletcher"
 date: "2/5/2021"
-output: html_document
-code_folding: hide
+output: 
+  html_document:
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE, message = FALSE, warning = TRUE}
@@ -13,12 +14,15 @@ library(tidyverse)
 library(here)
 library(broom)
 library(janitor)
+library(jtools)
+library(kableExtra)
+library(viridis)
 ```
 
 ## **Overview:** 
 
 
-## Data Visualization:
+## Part 1: Data Visualization
 ```{r}
 # Read in the data
 palmetto_data <- read_csv(here("data","palmetto.csv")) %>% 
@@ -26,18 +30,24 @@ palmetto_data <- read_csv(here("data","palmetto.csv")) %>%
 
 # Wrangle the data for visualization
 palmetto_clean <- palmetto_data %>% 
-  select("year", "species", "height", "length", "width", "green_lvs")
+  dplyr::select("species", "height", "length", "width", "green_lvs") %>% mutate(species = as.factor(species)) %>% 
+  mutate(plant_name = case_when(
+    species == 1 ~ "Serenoa repens",
+    species == 2 ~ "Sabal etonia"
+  )) %>% 
+  mutate(plant_name = fct_drop(plant_name))
 ```
 
 ```{r, fig.cap = "**Figure 1:** This graph shows the relationship between tree height and the amount of green leaves on both *Serenoa repens* and *Sabal etonia* (Data: Abrahamson et al. 2019)."}
 # Create first visualization: height and green leaves comparison
 
 ggplot(data = palmetto_clean, aes(x = height, y = green_lvs)) +
-  geom_col(aes(fill=species)) +
-  facet_wrap(~ species) +
+  geom_col(aes(fill=plant_name)) +
+  facet_wrap(~ plant_name) +
   theme_bw() +
   theme(legend.position = "none") +
-  labs(x = "Height (cm)", y = "Number of Green Leaves", title = "Leaf Content vs. Height of Serenoa repens and Sabal etonia", subtitle = "From 1982 to 2017")
+  labs(x = "Height (cm)", y = "Number of Green Leaves", title = "Leaf Content vs. Height of Serenoa repens and Sabal etonia", subtitle = "From 1982 to 2017") +
+  scale_fill_manual(values = c("darkseagreen4", "chocolate4"))
 ```
 #### From the graph above, we can see that both *Serenoa repens* and *Sabal etonia* appear to be similar in height (in centimaters). However, *Serenoa repens* tends to have a great amount of green leaves. Green leaf amount appears to be greatest for trees with heights close to the meana nd median values of hieght for both species. 
 
@@ -46,29 +56,91 @@ ggplot(data = palmetto_clean, aes(x = height, y = green_lvs)) +
 # Create a second visualization looking at the relationship between canopy width and canopy length
 
 ggplot(data = palmetto_clean, aes(x = length, y = width)) +
-  geom_point(aes(color=species)) +
-  geom_smooth(method='lm', color = "red") +
-  facet_wrap(~species) +
+  geom_point(aes(color = plant_name), alpha = 0.7) +
+  scale_color_manual(values = c("darkseagreen4", "chocolate4")) +
+  geom_smooth(method='lm', color = "black") +
+  facet_wrap(~plant_name) +
   theme_bw() +
   theme(legend.position = "none") +
-  labs(x = "Canopy Length (cm)", y = "Canopy Width (cm)", title = "Compariosn of Canopy Length vs. Canopy Width of Serenoa repens and Sabal etonia", subtitle = "From 1982 to 2017")
+  labs(x = "Canopy Length (cm)", y = "Canopy Width (cm)", title = "Compariosn of Canopy Length vs. Canopy Width of Serenoa repens and Sabal etonia", subtitle = "From 1982 to 2017") 
+  
+    
 ```
 
 As canopy length (cm) increases, canopy width (cm) appears to increase almost evenly for both *Serenoa repens* and *Sabal etonia*.
 
 ```{r, fig.cap="**Figure 3:** This boxplot shows us that based on the average canopy length (cm) of both species, *Serenoa repens* has the greatest amount of green leaves as compared to *Sabal etonia* (Data: Abrahamson et al. 2019)."}
+
 # Create third visualization looking at amount of green leaves by species
 
-ggplot(data = palmetto_clean, aes(x = length, y = green_lvs, color = species)) +
-  geom_boxplot() +
-  facet_wrap(~species) +
+ggplot(data = palmetto_clean, aes(x = length, y = green_lvs)) +
+  geom_boxplot(aes(fill = plant_name)) +
+  facet_wrap(~plant_name) +
   theme_bw() +
   theme(legend.position = "none") +
-  labs(x = "Canopy Length (cm)", y = "Amount of Green Leaves", title = "Green Leaf Content of Serenoa repens and Sabal etonia", subtitle = "From 1982 to 2017")
+  labs(x = "Canopy Length (cm)", y = "Amount of Green Leaves", title = "Green Leaf Content of Serenoa repens and Sabal etonia", subtitle = "From 1982 to 2017") +
+  scale_fill_manual(values = c("darkseagreen4", "chocolate4"))
 ```
 
 Based on canopy length (cm), *Serenoa repens* appears to have a great amount of green leaves on average than *Sabal etonia*.
 
 
 
+## Part 2: Binary Logistic Regression
+
+```{r}
+# create a binary logistic regression model and table
+palmetto_blr <- glm(plant_name ~ height + length + width + green_lvs,
+                    data = palmetto_clean,
+                    family = "binomial")
+
+summary(palmetto_blr)
+```
+
+#### **Table 1:** This table shows the preliminary results from a binary logitic regression model performed on the Palmetto data where *Serenoa repens* and *Sabal etonia* are the plant species and the four predictor variables used are plant height (cm), canopy length (cm), canopy width (cm) and amount of green leaves present (Data: Abrahamson et al. (2019)).
+```{r}
+# Tidy up the data and create a table
+palmetto_blr_tidy <- tidy(palmetto_blr)
+
+palmetto_blr_tidy %>% 
+  kbl(caption = "Palmetto Binary Logistic Regression Model Results") %>% 
+   kable_classic_2(full_width = F, html_font = "Cambria")
+```
+
+## Part 3: Probability of predicting plant type based on the BLR model
+
+```{r}
+palmetto_blr_fitted <- palmetto_blr %>% 
+  broom::augment(type.predict = "response")
+ 
+
+palmetto_blr_fitted
+```
+
+#### 
+```{r}
+# Create a fitted table
+palmetto_fitted_table <- palmetto_blr_fitted %>% 
+  mutate(Predicted = case_when(
+    .fitted > .50 ~ "Serenoa repens",
+    .fitted <= .50 ~ "Sabal etonia"
+  )) 
+
+palmetto_final <- palmetto_fitted_table %>% 
+  mutate(Correct = case_when(Predicted == plant_name ~ "Plants Successfully Predicted",
+                             TRUE ~ "Plants Unsuccessfully Predicted")) %>% 
+  select(plant_name, .fitted, Predicted, Correct) %>% 
+  group_by(plant_name, Correct) %>% 
+  summarize(Results = n()) %>% 
+  pivot_wider(plant_name, names_from = "Correct",
+              values_from = "Results") %>% 
+  adorn_percentages() %>% 
+  adorn_pct_formatting(digits = 2) %>% 
+  adorn_ns() %>% 
+  rename("Plant Species" = plant_name)
+
+palmetto_final %>% 
+  kbl(caption = "Palmetto Plant Species Prediction Outcomes") %>% 
+   kable_classic_2(full_width = F, html_font = "Cambria")
+```
 
